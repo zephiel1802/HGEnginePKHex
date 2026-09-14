@@ -41,7 +41,7 @@ public abstract class SAV4 : SaveFile, IEventFlag37, IDaycareStorage, IDaycareRa
     public sealed override bool GetFlag(int offset, int bitIndex) => GetFlag(General, offset, bitIndex);
     public sealed override void SetFlag(int offset, int bitIndex, bool value) => SetFlag(General, offset, bitIndex, value);
 
-    protected SAV4([ConstantExpected] int gSize, [ConstantExpected] int sSize)
+    protected SAV4(int gSize, int sSize)
     {
         GeneralBuffer = new byte[gSize];
         StorageBuffer = new byte[sSize];
@@ -50,7 +50,7 @@ public abstract class SAV4 : SaveFile, IEventFlag37, IDaycareStorage, IDaycareRa
         ClearBoxes();
     }
 
-    protected SAV4(Memory<byte> data, [ConstantExpected] int gSize, [ConstantExpected] int sSize, [ConstantExpected] int sStart) : base(data)
+    protected SAV4(Memory<byte> data, int gSize, int sSize, int sStart) : base(data)
     {
         var GeneralBlockPosition = GetActiveBlock(Data, 0, gSize);
         var StorageBlockPosition = GetActiveBlock(Data, sStart, sSize);
@@ -90,7 +90,7 @@ public abstract class SAV4 : SaveFile, IEventFlag37, IDaycareStorage, IDaycareRa
     public sealed override PK4 BlankPKM => new();
     public sealed override Type PKMType => typeof(PK4);
 
-    public sealed override int BoxCount => 18;
+    public override int BoxCount => 18;
     public sealed override int MaxEV => EffortValues.Max255;
     public sealed override byte Generation => 4;
     public sealed override EntityContext Context => EntityContext.Gen4;
@@ -101,10 +101,10 @@ public abstract class SAV4 : SaveFile, IEventFlag37, IDaycareStorage, IDaycareRa
     public sealed override int MaxMoney => 999999;
     public sealed override int MaxCoins => 50_000;
 
-    public sealed override ushort MaxMoveID => Legal.MaxMoveID_4;
-    public sealed override ushort MaxSpeciesID => Legal.MaxSpeciesID_4;
+    public override ushort MaxMoveID => Legal.MaxMoveID_4;
+    public override ushort MaxSpeciesID => Legal.MaxSpeciesID_4;
     // MaxItemID
-    public sealed override int MaxAbilityID => Legal.MaxAbilityID_4;
+    public override int MaxAbilityID => Legal.MaxAbilityID_4;
     public sealed override int MaxBallID => Legal.MaxBallID_4;
     public sealed override GameVersion MaxGameID => Legal.MaxGameID_4; // Colo/XD
 
@@ -177,7 +177,7 @@ public abstract class SAV4 : SaveFile, IEventFlag37, IDaycareStorage, IDaycareRa
         }
     }
 
-    private static int GetActiveBlock(ReadOnlySpan<byte> data, [ConstantExpected] int begin, [ConstantExpected] int length)
+    private static int GetActiveBlock(ReadOnlySpan<byte> data, int begin, int length)
     {
         int offset = begin + length - 0x14;
         return SAV4BlockDetection.CompareFooters(data, offset, offset + PartitionSize);

@@ -7,7 +7,7 @@ namespace PKHeX.Core;
 /// <summary>
 /// <see cref="SaveFile"/> format for <see cref="GameVersion.HGSS"/>
 /// </summary>
-public sealed class SAV4HGSS : SAV4, IBoxDetailName, IBoxDetailWallpaper
+public class SAV4HGSS : SAV4, IBoxDetailName, IBoxDetailWallpaper
 {
     public SAV4HGSS() : base(GeneralSize, StorageSize)
     {
@@ -23,11 +23,25 @@ public sealed class SAV4HGSS : SAV4, IBoxDetailName, IBoxDetailWallpaper
         Dex = new Zukan4(this, GeneralBuffer[PokeDex..]);
     }
 
+    protected SAV4HGSS(int gSize, int sSize) : base(gSize, sSize)
+    {
+        Initialize();
+        Mystery = new MysteryBlock4HGSS(this, GeneralBuffer.Slice(OffsetMystery, MysteryBlock4HGSS.Size));
+        Dex = new Zukan4(this, GeneralBuffer[PokeDex..]);
+    }
+
+    protected SAV4HGSS(Memory<byte> data, int gSize, int sSize, int sStart) : base(data, gSize, sSize, sStart)
+    {
+        Initialize();
+        Mystery = new MysteryBlock4HGSS(this, GeneralBuffer.Slice(OffsetMystery, MysteryBlock4HGSS.Size));
+        Dex = new Zukan4(this, GeneralBuffer[PokeDex..]);
+    }
+
     public override Zukan4 Dex { get; }
     protected override SAV4 CloneInternal4() => State.Exportable ? new SAV4HGSS(Data.ToArray()) : new SAV4HGSS();
 
     public override GameVersion Version { get => (GameVersion)ROMCode; set => ROMCode = (byte)value; }
-    public override PersonalTable4 Personal => PersonalTable.HGSS;
+    public override IPersonalTable Personal => PersonalTable.HGSS;
     public override ReadOnlySpan<ushort> HeldItems => Legal.HeldItems_HGSS;
     public override int MaxItemID => Legal.MaxItemID_4_HGSS;
     public const int GeneralSize = 0xF628;
@@ -135,18 +149,18 @@ public sealed class SAV4HGSS : SAV4, IBoxDetailName, IBoxDetailWallpaper
     /// <summary>
     /// The box structure stores bitflags to indicate which boxes have changed; used when saving to skip unchanged boxes.
     /// </summary>
-    public int FlagsBoxContentChanged
+    public virtual int FlagsBoxContentChanged
     {
         get => ReadInt32LittleEndian(Storage[(BOX_END + 4)..]);
         set => WriteInt32LittleEndian(Storage[(BOX_END + 4)..], value);
     }
 
-    private const int FlagsBoxContentChangedAll = 0x3_FFFF; // 18 boxes.
+    protected virtual int FlagsBoxContentChangedAll => 0x3_FFFF; // 18 boxes.
 
-    private Span<byte> GetBoxNameSpan(int box) => Storage.Slice(GetBoxNameOffset(box), BOX_NAME_LEN);
-    public string GetBoxName(int box) => GetString(GetBoxNameSpan(box));
+    protected virtual Span<byte> GetBoxNameSpan(int box) => Storage.Slice(GetBoxNameOffset(box), BOX_NAME_LEN);
+    public virtual string GetBoxName(int box) => GetString(GetBoxNameSpan(box));
 
-    public void SetBoxName(int box, ReadOnlySpan<char> value)
+    public virtual void SetBoxName(int box, ReadOnlySpan<char> value)
     {
         const int maxlen = 8;
         var span = GetBoxNameSpan(box);
@@ -162,14 +176,14 @@ public sealed class SAV4HGSS : SAV4, IBoxDetailName, IBoxDetailWallpaper
         return value;
     }
 
-    public int GetBoxWallpaper(int box)
+    public virtual int GetBoxWallpaper(int box)
     {
         int offset = GetBoxWallpaperOffset(box);
         int value = Storage[offset];
         return AdjustWallpaper(value, -0x10);
     }
 
-    public void SetBoxWallpaper(int box, int value)
+    public virtual void SetBoxWallpaper(int box, int value)
     {
         value = AdjustWallpaper(value, 0x10);
         Storage[GetBoxWallpaperOffset(box)] = (byte)value;

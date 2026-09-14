@@ -121,6 +121,7 @@ public static class BlankSaveFile
         DP => new SAV4DP(),
         Pt => new SAV4Pt(),
         HGSS => new SAV4HGSS(),
+        HGE => new SAV4HGE(),
         BattleRevolution => new SAV4BR(),
 
         BW => new SAV5BW(),

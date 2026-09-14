@@ -124,7 +124,7 @@ public sealed class PGT(Memory<byte> raw) : DataMysteryGift(raw), IRibbonSetEven
         // Template is already filled out, only minor mutations required
         byte[] clone = [.. PK.Data]; // disassociate from gift template
         PK4 pk4 = new(clone) { Sanity = 0 }; // clear for the bad WORLD08 Lucario (0x0100)
-        var pi = pk4.PersonalInfo;
+        var pi = (PersonalInfo4)pk4.PersonalInfo;
 
         if (IsEgg)
         {

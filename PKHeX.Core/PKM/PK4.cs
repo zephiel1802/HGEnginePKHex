@@ -5,7 +5,7 @@ using static System.Buffers.Binary.BinaryPrimitives;
 namespace PKHeX.Core;
 
 /// <summary> Generation 4 <see cref="PKM"/> format. </summary>
-public sealed class PK4 : G4PKM
+public class PK4 : G4PKM
 {
     public override ReadOnlySpan<ushort> ExtraBytes =>
     [
@@ -17,7 +17,12 @@ public sealed class PK4 : G4PKM
     public override int SIZE_PARTY => PokeCrypto.SIZE_4PARTY;
     public override int SIZE_STORED => PokeCrypto.SIZE_4STORED;
     public override EntityContext Context => EntityContext.Gen4;
-    public override PersonalInfo4 PersonalInfo => PersonalTable.HGSS.GetFormEntry(Species, Form);
+    public override PersonalInfo PersonalInfo => Species switch
+    {
+        <= Legal.MaxSpeciesID_4 => PersonalTable.HGSS.GetFormEntry(Species, Form),
+        <= Legal.MaxSpeciesID_6 => PersonalTable.AO.GetFormEntry(Species, Form),
+        _ => PersonalTable.SV.GetFormEntry(Species, Form),
+    };
 
     public PK4() : base(PokeCrypto.SIZE_4PARTY) { }
     public PK4(Memory<byte> data) : base(DecryptParty(data)) { }

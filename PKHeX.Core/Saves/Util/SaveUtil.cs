@@ -169,6 +169,7 @@ public static class SaveUtil
         if (IsG3(data, out var smallOffset)) return GetVersionG3SAV(data[smallOffset..]);
         if (IsG4DP(data)) return DP;
         if (IsG4Pt(data)) return Pt;
+        if (IsG4HGE(data)) return HGE;
         if (IsG4HGSS(data)) return HGSS;
         if (IsG5BW(data)) return BW;
         if (IsG5B2W2(data)) return B2W2;
@@ -375,6 +376,40 @@ public static class SaveUtil
 
     private static bool IsG4DP(ReadOnlySpan<byte> data) => data.Length == SIZE_G4RAW && IsValidGeneralFooter2(data, SAV4DP.GeneralSize);
     private static bool IsG4Pt(ReadOnlySpan<byte> data) => data.Length == SIZE_G4RAW && IsValidGeneralFooter2(data, SAV4Pt.GeneralSize);
+    private static bool IsG4HGE(ReadOnlySpan<byte> data)
+    {
+        if (data.Length is not (SIZE_G4RAW or 0x80000 or 0x100000))
+            return false;
+
+        const int sStart = 0xF700;
+        const int sSize30 = SAV4HGE.StorageSizeHGE;
+        const int offsetP2 = 0x40000 + sStart + sSize30;
+
+        if (data.Length >= offsetP2)
+        {
+            var size = ReadUInt32LittleEndian(data[(offsetP2 - 0xC)..]);
+            if (size == sSize30)
+            {
+                var magic = ReadUInt32LittleEndian(data[(offsetP2 - 0x8)..]);
+                if (magic is SAV4.MAGIC_JAPAN_INTL or SAV4.MAGIC_KOREAN)
+                    return true;
+            }
+        }
+
+        const int offsetP1 = sStart + sSize30;
+        if (data.Length >= offsetP1)
+        {
+            var size = ReadUInt32LittleEndian(data[(offsetP1 - 0xC)..]);
+            if (size == sSize30)
+            {
+                var magic = ReadUInt32LittleEndian(data[(offsetP1 - 0x8)..]);
+                if (magic is SAV4.MAGIC_JAPAN_INTL or SAV4.MAGIC_KOREAN)
+                    return true;
+            }
+        }
+
+        return false;
+    }
     private static bool IsG4HGSS(ReadOnlySpan<byte> data) => data.Length == SIZE_G4RAW && IsValidGeneralFooter2(data, SAV4HGSS.GeneralSize);
     private static bool IsG4BR(ReadOnlySpan<byte> data) => data.Length == SIZE_G4BR && SAV4BR.IsValidSaveFile(data);
     private static bool IsG5BW(ReadOnlySpan<byte> data) => data.Length == SIZE_G5RAW && IsValidFooter5(data, SIZE_G5BW, 0x8C);
@@ -643,6 +678,7 @@ public static class SaveUtil
         DP => new SAV4DP(data),
         Pt => new SAV4Pt(data),
         HGSS => new SAV4HGSS(data),
+        HGE => new SAV4HGE(data),
 
         BW => new SAV5BW(data),
         B2W2 => new SAV5B2W2(data),

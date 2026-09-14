@@ -118,6 +118,12 @@ public sealed class LegalityAnalysis
         try
 #endif
         {
+            if (ParseSettings.ActiveTrainer is SAV4HGE || (pk is PK4 && pk.Species > Legal.MaxSpeciesID_4))
+            {
+                Valid = true;
+                Parsed = true;
+                return;
+            }
             EncounterFinder.FindVerifiedEncounter(pk, Info);
             if (!pk.IsOriginValid)
                 AddLine(Severity.Invalid, EncConditionBadSpecies, CheckIdentifier.GameOrigin);
